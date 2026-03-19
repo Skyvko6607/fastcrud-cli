@@ -1,0 +1,90 @@
+name: Build CLIs and Upload Them as Release Assets
+
+on:
+  release:
+    types:
+      - published
+
+permissions: {}
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write
+
+    strategy:
+      matrix:
+        cli: [fitactivity, fitconv]
+        os: [linux, macOS, windows]
+
+    steps:
+      - uses: actions/checkout@8e8c483db84b4bee98b60c0593521ed34d9990e8 # v6.0.1
+
+      - name: Set up Go
+        uses: actions/setup-go@4dc6199c7b1a012772edbd06daecab0f50c9053c # v6.1.0
+        with:
+          go-version: "stable"
+
+      - name: Build [macOS]
+        if: matrix.os == 'macOS'
+        run: |
+          CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build -ldflags="-s -w -X 'main.version=$(git describe --tags)'" -trimpath -o $cli cmd/$cli/main.go
+          zip -9q $cli-$os-amd64.zip $cli LICENSE
+          CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build -ldflags="-s -w -X 'main.version=$(git describe --tags)'" -trimpath -o $cli cmd/$cli/main.go
+          zip -9q $cli-$os-arm64.zip $cli LICENSE
+          rm $cli
+          printf "sha256: %s\n" "$(shasum -a 256 $cli-$os-amd64.zip)"
+          printf "sha256: %s\n" "$(shasum -a 256 $cli-$os-arm64.zip)"
+        env:
+          cli: ${{ matrix.cli }}
+          os: ${{ matrix.os }}
+
+      - name: Build [windows]
+        if: matrix.os == 'windows'
+        run: |
+          CGO_ENABLED=0 GOOS=$os GOARCH=amd64 go build -ldflags="-s -w -X 'main.version=$(git describe --tags)'" -trimpath -o $cli.exe cmd/$cli/main.go
+          zip -9q $cli-$os-amd64.zip $cli.exe LICENSE
+          rm $cli.exe
+          printf "sha256: %s\n" "$(shasum -a 256 $cli-$os-amd64.zip)"
+        env:
+          cli: ${{ matrix.cli }}
+          os: ${{ matrix.os }}
+
+      - name: Build [linux]
+        if: matrix.os == 'linux'
+        run: |
+          CGO_ENABLED=0 GOOS=$os GOARCH=amd64 go build -ldflags="-s -w -X 'main.version=$(git describe --tags)'" -trimpath -o $cli cmd/$cli/main.go
+          tar -I 'gzip -9' -cf $cli-$os-amd64.tar.gz $cli LICENSE
+          rm $cli
+          printf "sha256: %s\n" "$(shasum -a 256 $cli-$os-amd64.tar.gz)"
+        env:
+          cli: ${{ matrix.cli }}
+          os: ${{ matrix.os }}
+
+      - name: Upload Release Assets [macOS]
+        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
+        if: startsWith(github.ref, 'refs/tags/v') && matrix.os == 'macOS'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          files: |
+            ${{ matrix.cli }}-${{ matrix.os }}-amd64.zip
+            ${{ matrix.cli }}-${{ matrix.os }}-arm64.zip
+
+      - name: Upload Release Assets [windows]
+        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
+        if: startsWith(github.ref, 'refs/tags/v') && matrix.os == 'windows'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          files: ${{ matrix.cli }}-${{ matrix.os }}-amd64.zip
+
+      - name: Upload Release Assets [linux]
+        uses: softprops/action-gh-release@a06a81a03ee405af7f2048a818ed3f03bbf83c7b # v2.5.0
+        if: startsWith(github.ref, 'refs/tags/v') && matrix.os == 'linux'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          files: ${{ matrix.cli }}-${{ matrix.os }}-amd64.tar.gz
