@@ -35,15 +35,15 @@ jobs:
           echo "Building macOS amd64..."
           CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build \
             -ldflags="-s -w -X 'main.version=$(git describe --tags)'" \
-            -trimpath -o $CLI cmd/$CLI/main.go
-          zip -9q $CLI-$OS-amd64.zip $CLI LICENSE
+            -trimpath -o $CLI cli/main.go
+          zip -9q $CLI-$OS-amd64.zip $CLI
           rm $CLI
 
           echo "Building macOS arm64..."
           CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build \
             -ldflags="-s -w -X 'main.version=$(git describe --tags)'" \
-            -trimpath -o $CLI cmd/$CLI/main.go
-          zip -9q $CLI-$OS-arm64.zip $CLI LICENSE
+            -trimpath -o $CLI cli/main.go
+          zip -9q $CLI-$OS-arm64.zip $CLI
           rm $CLI
 
       #
@@ -58,8 +58,8 @@ jobs:
           echo "Building Windows amd64..."
           CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build \
             -ldflags="-s -w -X 'main.version=$(git describe --tags)'" \
-            -trimpath -o $CLI.exe cmd/$CLI/main.go
-          zip -9q $CLI-$OS-amd64.zip $CLI.exe LICENSE
+            -trimpath -o $CLI.exe cli/main.go
+          zip -9q $CLI-$OS-amd64.zip $CLI.exe
           rm $CLI.exe
 
       #
@@ -74,8 +74,8 @@ jobs:
           echo "Building Linux amd64..."
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
             -ldflags="-s -w -X 'main.version=$(git describe --tags)'" \
-            -trimpath -o $CLI cmd/$CLI/main.go
-          tar -I 'gzip -9' -cf $CLI-$OS-amd64.tar.gz $CLI LICENSE
+            -trimpath -o $CLI cli/main.go
+          tar -I 'gzip -9' -cf $CLI-$OS-amd64.tar.gz $CLI
           rm $CLI
 
       #
