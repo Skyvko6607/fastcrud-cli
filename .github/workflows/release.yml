@@ -9,11 +9,15 @@ permissions:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.os == 'windows' && 'windows-latest' || matrix.os == 'macOS' && 'macos-latest' || 'ubuntu-latest' }}
 
     strategy:
       matrix:
         os: [linux, macOS, windows]
+
+    defaults:
+      run:
+        shell: bash
 
     steps:
       - uses: actions/checkout@v4
