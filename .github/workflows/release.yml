@@ -28,6 +28,7 @@ jobs:
       #
       - name: Build [macOS]
         if: matrix.os == 'macOS'
+        working-directory: cli
         env:
           CLI: fastcrud
           OS: ${{ matrix.os }}
@@ -35,14 +36,17 @@ jobs:
           echo "Building macOS amd64..."
           CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 go build \
             -ldflags="-s -w -X 'main.version=$(git describe --tags)'" \
-            -trimpath -o $CLI cli/main.go
+            -trimpath -o ../$CLI main.go
+          cd ..
           zip -9q $CLI-$OS-amd64.zip $CLI
           rm $CLI
+          cd cli
 
           echo "Building macOS arm64..."
           CGO_ENABLED=0 GOOS=darwin GOARCH=arm64 go build \
             -ldflags="-s -w -X 'main.version=$(git describe --tags)'" \
-            -trimpath -o $CLI cli/main.go
+            -trimpath -o ../$CLI main.go
+          cd ..
           zip -9q $CLI-$OS-arm64.zip $CLI
           rm $CLI
 
@@ -51,6 +55,7 @@ jobs:
       #
       - name: Build [Windows]
         if: matrix.os == 'windows'
+        working-directory: cli
         env:
           CLI: fastcrud
           OS: ${{ matrix.os }}
@@ -58,7 +63,8 @@ jobs:
           echo "Building Windows amd64..."
           CGO_ENABLED=0 GOOS=windows GOARCH=amd64 go build \
             -ldflags="-s -w -X 'main.version=$(git describe --tags)'" \
-            -trimpath -o $CLI.exe cli/main.go
+            -trimpath -o ../$CLI.exe main.go
+          cd ..
           zip -9q $CLI-$OS-amd64.zip $CLI.exe
           rm $CLI.exe
 
@@ -67,6 +73,7 @@ jobs:
       #
       - name: Build [Linux]
         if: matrix.os == 'linux'
+        working-directory: cli
         env:
           CLI: fastcrud
           OS: ${{ matrix.os }}
@@ -74,7 +81,8 @@ jobs:
           echo "Building Linux amd64..."
           CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
             -ldflags="-s -w -X 'main.version=$(git describe --tags)'" \
-            -trimpath -o $CLI cli/main.go
+            -trimpath -o ../$CLI main.go
+          cd ..
           tar -I 'gzip -9' -cf $CLI-$OS-amd64.tar.gz $CLI
           rm $CLI
 
